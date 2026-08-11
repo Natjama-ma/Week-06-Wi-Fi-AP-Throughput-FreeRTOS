@@ -76,6 +76,10 @@ sequenceDiagram
 3. คำนวณค่า **$R^2$ (Coefficient of Determination)** เพื่อประเมินความแม่นยำของสมการ
 4. ระบุจุด **Threshold RSSI (dBm)** ที่ความเร็วเริ่มลดลงมากกว่า 50% จากระดับสูงสุด
 
+
+<img width="995" height="467" alt="image" src="https://github.com/user-attachments/assets/82ab5155-bb8a-4088-8711-d5e82a17d54c" />
+
+
 ---
 
 ## 7. คำถามท้ายการทดลอง (Post-Lab Questions)
