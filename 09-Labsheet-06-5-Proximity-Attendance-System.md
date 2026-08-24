@@ -188,6 +188,10 @@ void app_main(void) {
 | **1** |2E:95:F3:B5:D9:14 | -45| Near| Passed |
 | **2** |46:7A:1A:BA:24:F2 | -45| Near| Passed |
 
+
+<img width="1110" height="377" alt="image" src="https://github.com/user-attachments/assets/0cf8ba7c-2d28-49bb-ae07-e351e8d9802d" />
+
+
 ---
 
 ## 6. คำถามท้ายการทดลอง (Post-Lab Questions)
