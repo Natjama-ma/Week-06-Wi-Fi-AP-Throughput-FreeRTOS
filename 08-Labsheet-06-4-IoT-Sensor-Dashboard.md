@@ -98,15 +98,20 @@ xSemaphoreGive(mutex)           xSemaphoreGive(mutex)
 
 | ครั้งที่ | Temperature (°C) | Humidity (%) | Light Lux | Timestamp (ms) |
 | :------: | :--------------: | :----------: | :-------: | :------------: |
-|  **1**   |                  |              |           |                |
-|  **2**   |                  |              |           |                |
-|  **3**   |                  |              |           |                |
+|  **1**   |       26.1         |     52.9      | 549        |      218080          |
+|  **2**   |       30.6           |  56.1            |     684      |      221100          |
+|  **3**   |       32.9           |    51.1          |      317    |        103350        |
 
 ### 7.2 ทดสอบ JSON API (`/api/data`)
 
 บันทึก Raw JSON Response จาก Browser:
 
-```json
+```
+
+{”temperature“:26.30,
+”humidity“:66.00,
+”light_lux“:561,
+”timestamp_ms“:352460}
 
 ```
 
@@ -115,9 +120,27 @@ xSemaphoreGive(mutex)           xSemaphoreGive(mutex)
 ## 8. คำถามท้ายการทดลอง (Post-Lab Questions)
 
 1. เหตุใดจึงต้องใช้ **Mutex** ในการป้องกันการเข้าถึงตัวแปร `g_latest_data` ร่วมกันระหว่าง `vNetworkTask` และ HTTP Handler? ถ้าไม่ใช้จะเกิดอะไรขึ้น?
-2. `esp_http_server` รัน Handler บน Thread ใด — เป็น Thread เดียวกับ FreeRTOS Task ของเราหรือไม่?
-3. การที่ Dashboard ใช้ `<meta http-equiv="refresh" content="2">` แทนที่จะใช้ JavaScript `fetch()` มีข้อดีและข้อเสียอย่างไร?
+~~~
+ต้องใช้ Mutex เพื่อป้องกันปัญหา Race Condition ครับ เนื่องจาก vNetworkTask ทำหน้าที่ "เขียน" ข้อมูลใหม่ลงไป ส่วน HTTP Handler ทำหน้าที่อ่านข้อมูลออกไป
+หากไม่ใช้ Mutex บล็อกเอาไว้ อาจเกิดเหตุการณ์ที่ HTTP Handler เข้ามาอ่านข้อมูลในจังหวะเดียวกับที่ vNetworkTask เขียนข้อมูลยังไม่เสร็จ ทำให้เกิดปัญหาที่เรียกว่า Torn Read
+คือได้ข้อมูลครึ่งเก่าครึ่งใหม่ผสมกัน ทำให้หน้าเว็บหรือ JSON แสดงค่าที่ผิดเพี้ยนไป
 
+~~~
+2. `esp_http_server` รัน Handler บน Thread ใด — เป็น Thread เดียวกับ FreeRTOS Task ของเราหรือไม่?
+~~~
+ฟังก์ชัน esp_http_server ไม่ได้รัน บน Thread เดียวกับ vSensorTask หรือ vNetworkTask ของเราครับ เมื่อเราเรียกคำสั่ง httpd_start() ตัวเฟรมเวิร์ก ESP-IDF จะทำการสร้าง
+FreeRTOS Task (Thread) ขึ้นมาใหม่เป็นเบื้องหลัง (Background Task) สำหรับจัดการกับ Web Server โดยเฉพาะ ดังนั้น HTTP Handler จึงทำงานอยู่บน Thread ของมันเอง
+ทำให้เราต้องใช้ Mutex เพื่อแชร์ข้อมูลข้าม Thread อย่างปลอดภัย
+
+~~~
+
+3. การที่ Dashboard ใช้ `<meta http-equiv="refresh" content="2">` แทนที่จะใช้ JavaScript `fetch()` มีข้อดีและข้อเสียอย่างไร?
+~~~
+ข้อดี: เขียนโค้ดง่ายมากและสั้นกระชับ ไม่ต้องมีความรู้เรื่อง JavaScript หรือการเขียนโปรแกรมฝั่ง Frontend (Asynchronous) ก็สามารถทำให้หน้าเว็บอัปเดตตัวเองได้
+ข้อเสีย: สิ้นเปลืองแบนด์วิดท์ (Bandwidth) และทรัพยากรของ ESP32 มาก เพราะทุกๆ 2 วินาที บราวเซอร์จะต้องดาวน์โหลดหน้าเว็บเพจทั้งหน้าใหม่ทั้งหมด (รวมถึงแท็ก HTML ต่างๆ) นอกจากนี้ยังทำให้เกิดประสบการณ์
+การใช้งานที่ไม่ดี (UX แย่) เพราะหน้าจอจะกระพริบ (Flicker) สีขาวทุกครั้งที่รีเฟรช ต่างจากการใช้ JavaScript fetch() ที่จะดึงเฉพาะข้อมูล JSON มาอัปเดตแค่ตัวเลข โดยที่หน้าเว็บไม่ต้องโหลดใหม่
+
+~~~
 ---
 
 ## 9. ความรู้เพิ่มเติม: ESP-IDF `esp_http_server` API
